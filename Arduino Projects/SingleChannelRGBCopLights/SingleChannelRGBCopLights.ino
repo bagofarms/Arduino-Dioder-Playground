@@ -12,6 +12,9 @@ one channel, since i want the color to be uniform across all of the lights.
 const int channel1PinR = 3;
 const int channel1PinG = 5;
 const int channel1PinB = 6;
+const int del = 50;
+const int maxbr = 255;
+const int minbr = 50;
 
 void setup() {
   // set pins as outputs
@@ -31,16 +34,18 @@ void loop () {
   analogWrite(channel1PinB, random(0,255));
   delay(random(30,200));
   */
-  analogWrite(channel1PinG, 0);
-  analogWrite(channel1PinB, 0);
-  
-  for(int brightness = 0; brightness <= 255; brightness = brightness++){
-    analogWrite(channel1PinR, brightness);
-    delay(5);
+  for(int i=3; i>0; i--){
+    analogWrite(channel1PinR, random(minbr, maxbr));
+    delay(del);
+    analogWrite(channel1PinR, 0);
+    delay(del);
   }
-  for(int brightness = 254; brightness >= 0; brightness--){
-    analogWrite(channel1PinR, brightness);
-    delay(5);
+  
+  for(int i=3; i>0; i--){
+    analogWrite(channel1PinB, random(minbr, maxbr));
+    delay(del);
+    analogWrite(channel1PinB, 0);
+    delay(del);
   }
 }
 
