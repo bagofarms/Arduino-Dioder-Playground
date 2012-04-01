@@ -32,8 +32,8 @@ int prevR = redVal;
 int prevG = grnVal;
 int prevB = bluVal;
 
-int wait = 5;      // 10ms internal crossFade delay; increase for slower fades
-int hold = 1000;       // Optional hold when a color is complete, before the next crossFade
+int wait = 10;      // 10ms internal crossFade delay; increase for slower fades
+int hold = 5000;       // Optional hold when a color is complete, before the next crossFade
 int DEBUG = 0;      // DEBUG counter; if set to 1, will write values back via serial
 int loopCount = 60; // How often should DEBUG report?
 int repeat = 0;     // How many times should we loop before stopping? (0 for no stop)
@@ -53,10 +53,13 @@ void setup() {
 
 
 void loop () {
-  crossFade(green);
+  crossFade(white);
   crossFade(red);
-  crossFade(blue);
   crossFade(orange);
+  crossFade(blue);
+  crossFade(green);
+  crossFade(orange);
+  crossFade(red);
 
   if (repeat) { // Do we loop a finite number of times?
     j += 1;
