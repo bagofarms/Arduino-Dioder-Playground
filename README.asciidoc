@@ -1,6 +1,10 @@
 Arduino + Dioder Playground
 ===========================
 
+This repository contains Arduino sketches for controlling IKEA Dioder LED Strips using an Arduino Uno.
+
+The original project's README follows:
+
 This repository contains Xcode projects and Arduino sketches for controlling IKEA Dioder LED strips using an Arduino Mega 2560. You can find a detailed writeup about this here:
 
 http://danielkennett.org/blog/2011/09/arduino-dioder-part-one/
