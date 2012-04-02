@@ -20,6 +20,7 @@ int red[3]    = { 255, 0, 0 };
 int green[3]  = { 0, 255, 0 };
 int blue[3]   = { 0, 0, 255 };
 int orange[3] = { 255, 101, 0 };
+int purple[3] = { 255, 0, 255 };
 // etc.
 
 // Set initial color
@@ -54,12 +55,14 @@ void setup() {
 
 void loop () {
   crossFade(white);
+  crossFade(purple);
   crossFade(red);
   crossFade(orange);
   crossFade(blue);
   crossFade(green);
   crossFade(orange);
   crossFade(red);
+  crossFade(purple);
 
   if (repeat) { // Do we loop a finite number of times?
     j += 1;
