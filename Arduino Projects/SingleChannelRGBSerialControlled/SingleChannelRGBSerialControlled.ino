@@ -50,10 +50,45 @@ void setup() {
   if (DEBUG) {           // If we want to see values for debugging...
     Serial.begin(9600);  // ...set up the serial ouput 
   }
+  
+  Serial.begin(9600);
 }
 
 
 void loop () {
+  Serial.println("25");
+  delay(500);
+  Serial.println("75");
+  delay(500);
+  Serial.println("100");
+  delay(500);
+  
+  /*
+  //Wait until we get something
+  while( Serial.available() == 0);
+  
+  //Read the Input
+  int val = Serial.read() - '0';
+  
+  if(val == 0){
+    Serial.println("Red");
+    setToColor(red);
+  }else if(val == 1){
+    Serial.println("Green");
+    setToColor(green);
+  }else if(val == 2){
+    Serial.println("Blue");
+    setToColor(blue);
+  }else{
+    Serial.println("invalid");
+  }
+  
+  //Clear out all the other characters in the buffer
+  while( Serial.available() > 0){
+    Serial.read();
+  }
+  */
+  /*
   crossFade(white);
   crossFade(purple);
   crossFade(red);
@@ -63,7 +98,7 @@ void loop () {
   crossFade(orange);
   crossFade(red);
   crossFade(purple);
-  
+  */
   if (repeat) { // Do we loop a finite number of times?
     j += 1;
     if (j >= repeat) { // Are we there yet?
