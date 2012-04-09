@@ -7,16 +7,17 @@ Serial port;
 int brightness = 0;
 
 void setup(){
-  size(200,200);
+  println("Connected to:  "+Serial.list()[0]);
   port = new Serial(this, Serial.list()[0], 9600);
-  port.bufferUntil('\n');
+  port.bufferUntil(1);
   
 }
 
 void draw(){
-  background(0,0,brightness);
+  
 }
 
 void serialEvent(Serial port){
-  println(port.readStringUntil('\n'));
+  println(second());
+  port.write(second());
 }
