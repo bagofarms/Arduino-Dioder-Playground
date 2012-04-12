@@ -294,7 +294,7 @@ void loop() {
         crossFade(orange);
         break;
       case 9:
-        crossFade(ltblue);
+        crossFade(blue);
         break;
       case 10:
         crossFade(ltblue);
@@ -312,10 +312,10 @@ void loop() {
         crossFade(ltblue);
         break;
       case 15:
-        crossFade(ltblue);
+        crossFade(ltgreen);
         break;
       case 16:
-        crossFade(ltgreen);
+        crossFade(green);
         break;
       case 17:
         crossFade(orange);
