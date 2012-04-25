@@ -16,7 +16,10 @@
  * Q(1-2) - (Q1) Memory initialization  (Q2) RTC - Memory Dump  
  * R - Read/display the time, day and date
  */
- 
+
+// Provides sunrise/sunset information
+#include <TimeLord.h> 
+
 #include "Wire.h"
 #define DS1307_I2C_ADDRESS 0x68  // This is the I2C address
 // Arduino version compatibility Pre-Compiler Directives
@@ -64,8 +67,15 @@ int prevR = redVal;
 int prevG = grnVal;
 int prevB = bluVal;
 
+// Sunrise/sunset variables
+TimeLord timeLord;
+byte sunRise[] = {0, 0, 0, 0, 0, 0};
+byte sunSet[] = {0, 0, 0, 0, 0, 0};
+
 int wait = 5;      // 10ms internal crossFade delay; increase for slower fades
 int hold = 5000;       // Optional hold when a color is complete, before the next crossFade
+
+// Calendar values
 
 /**** Clock Functions ****/
 // Convert normal decimal numbers to binary coded decimal
@@ -258,7 +268,24 @@ void crossFade(int color[3]) {
   delay(hold); // Pause for optional 'wait' milliseconds before resuming the loop
 }
 
-
+// Will be called every second by the RTC
+// Based on the current time, looks up what color the Dioder should have
+void updateColor(){
+  byte prev_dayOfMonth = dayOfMonth;
+  // Get current date and time
+  getDateDs1307();
+  
+  // If it's the same day, update the sunRise and sunSet times
+  if(dayOfMonth != prev_dayOfMonth){
+    sunRise = {0, 0, 0, dayOfMonth, month, year};
+    timeLord.SunRise(sunRise);
+    
+    sunSet = {0, 0, 0, dayOfMonth, month, year};
+    timeLord.SunRise(sunSet);
+  }
+  
+  Serial.println("Heartbeat");
+}
 
 void setup() {
   // Clock Setup
@@ -272,6 +299,12 @@ void setup() {
   pinMode(bluPin, OUTPUT);
   
   setToColor(white);
+  attachInterrupt(0, updateColor, RISING);  // Digital pin 2
+  
+  // Configure TimeLord
+  timeLord.Position(28.6, -81.2);
+  timeLord.TimeZone(-5 * 60);
+  
   delay(1000);
 }
 
