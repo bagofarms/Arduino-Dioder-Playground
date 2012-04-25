@@ -22,6 +22,8 @@
 
 #include "Wire.h"
 #define DS1307_I2C_ADDRESS 0x68  // This is the I2C address
+#define DS1307_SQWE 7 // 07h - squarewave control register
+#define DS1307_HI_SQWE B00010000 // SQWE = 1 (enabled), RS1 = 0, RS0 = 0
 // Arduino version compatibility Pre-Compiler Directives
 #if defined(ARDUINO) && ARDUINO >= 100   // Arduino v1.0 and newer
   #define I2C_WRITE Wire.write 
@@ -68,9 +70,10 @@ int prevG = grnVal;
 int prevB = bluVal;
 
 // Sunrise/sunset variables
+const int swIn = 2;
 TimeLord timeLord;
-byte sunRise[] = {0, 0, 0, 0, 0, 0};
-byte sunSet[] = {0, 0, 0, 0, 0, 0};
+byte sunRise[6] = {0, 0, 0, 0, 0, 0};
+byte sunSet[6] = {0, 0, 0, 0, 0, 0};
 
 int wait = 5;      // 10ms internal crossFade delay; increase for slower fades
 int hold = 5000;       // Optional hold when a color is complete, before the next crossFade
@@ -277,10 +280,14 @@ void updateColor(){
   
   // If it's the same day, update the sunRise and sunSet times
   if(dayOfMonth != prev_dayOfMonth){
-    sunRise = {0, 0, 0, dayOfMonth, month, year};
+    sunRise[3] = dayOfMonth;
+    sunRise[4] = month;
+    sunRise[5] = year;
     timeLord.SunRise(sunRise);
     
-    sunSet = {0, 0, 0, dayOfMonth, month, year};
+    sunSet[3] = dayOfMonth;
+    sunSet[4] = month;
+    sunSet[5] = year;
     timeLord.SunRise(sunSet);
   }
   
@@ -293,13 +300,25 @@ void setup() {
   Serial.begin(57600); 
   zero=0x00;
   
+  // Set 1Hz Square Wave output
+  Wire.beginTransmission(DS1307_I2C_ADDRESS);
+  Wire.write(DS1307_SQWE);                    //Select the SQWE byte
+  Wire.write(DS1307_HI_SQWE);                 //Set the SQWE flag to 1, with everything else 0
+  Wire.endTransmission();
+  
+  
   // Color Pin Setup
   pinMode(redPin, OUTPUT);   // sets the pins as output
   pinMode(grnPin, OUTPUT);   
   pinMode(bluPin, OUTPUT);
   
   setToColor(white);
-  attachInterrupt(0, updateColor, RISING);  // Digital pin 2
+  
+  /*
+  pinMode(swIn, INPUT);
+  attachInterrupt(0, updateColor, FALLING);  // Digital pin 2
+  digitalWrite(swIn, HIGH);
+  */
   
   // Configure TimeLord
   timeLord.Position(28.6, -81.2);
