@@ -8,7 +8,7 @@ one channel, since i want the color to be uniform across all of the lights.
 
 */
 
-/* Choose the first 3 PWM pins.  9,10,11 are the other 3 */
+/* Choose the first 3 PWM pins.  3,5,6 9,10,11 are the other 3 */
 const int redPin = 3;
 const int grnPin = 5;
 const int bluPin = 6;
@@ -47,23 +47,22 @@ void setup() {
   pinMode(grnPin, OUTPUT);   
   pinMode(bluPin, OUTPUT); 
 
-  if (DEBUG) {           // If we want to see values for debugging...
-    Serial.begin(9600);  // ...set up the serial ouput 
-  }
+  analogWrite(redPin, 255);
   
   Serial.begin(9600);
 }
 
 
 void loop () {
+  /*
   Serial.println("25");
   delay(500);
   Serial.println("75");
   delay(500);
   Serial.println("100");
   delay(500);
+  */
   
-  /*
   //Wait until we get something
   while( Serial.available() == 0);
   
@@ -79,6 +78,9 @@ void loop () {
   }else if(val == 2){
     Serial.println("Blue");
     setToColor(blue);
+  }else if(val == 3){
+    Serial.println("Purple");
+    setToColor(purple);
   }else{
     Serial.println("invalid");
   }
@@ -87,7 +89,7 @@ void loop () {
   while( Serial.available() > 0){
     Serial.read();
   }
-  */
+  
   /*
   crossFade(white);
   crossFade(purple);
