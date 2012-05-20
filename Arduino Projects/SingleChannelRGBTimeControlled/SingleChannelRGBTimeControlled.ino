@@ -32,12 +32,13 @@ int black[3]  = {   0,   0,   0 };
 int white[3]  = { 255, 255, 255 };
 int red[3]    = { 255,   0,   0 };
 int green[3]  = {   0, 255,   0 };
-int ltgreen[3]= { 100, 255, 100 };
 int blue[3]   = {   0,   0, 255 };
+int ltgreen[3]= { 100, 255, 100 };
 int ltblue[3] = { 100, 100, 255 };
 int orange[3] = { 255, 101,   0 };
 int purple[3] = { 255,   0, 255 };
 
+// Variables that will hold the current color value
 int redVal;
 int grnVal;
 int bluVal;
@@ -55,7 +56,7 @@ uint32_t NOON = 43200;
 byte prevHour = 0;
 byte prevDayOfMonth = 0;
 
-boolean DEBUG = true;
+boolean DEBUG = false;
 
 
 void setup() {
@@ -70,9 +71,7 @@ void setup() {
   pinMode(grnPin, OUTPUT);   
   pinMode(bluPin, OUTPUT);
   
-  setToColor(white);
-  
-  // Configure TimeLord
+  // Configure TimeLord for Orlando, FL and GMT-5 (Eastern)
   timeLord.Position(28.6, -81.2);
   timeLord.TimeZone(-5 * 60);
   
@@ -81,10 +80,26 @@ void setup() {
     DateTime now = RTC.now();
     printTime(now);
   }
+  
+  // Run startup test sequence
+  setToColor(purple);
+  delay(200);
+  setToColor(red);
+  delay(200);
+  setToColor(orange);
+  delay(200);
+  setToColor(blue);
+  delay(200);
+  setToColor(green);
+  delay(200);
+  setToColor(white);
+  
+  delay(500);
 }
 
 
 void loop() {
+  // Get the current time
   DateTime now = RTC.now();
   
   if(DEBUG){
@@ -125,6 +140,13 @@ void updateCycleTimes(){
   uint32_t sunRiseTimestamp = secondsFromMidnight(sunRise[2], sunRise[1], sunRise[0]);
   uint32_t sunSetTimestamp = secondsFromMidnight(sunSet[2], sunSet[1], sunSet[0]);
   
+  if(DEBUG){
+    Serial.print("Sunrise Timestamp = ");
+    Serial.println(sunRiseTimestamp);
+    Serial.print("Sunset Timestamp = ");
+    Serial.println(sunSetTimestamp);
+  }
+  
   cycleTimes[0] = sunRiseTimestamp - cycleOffsets[0];  //Before sunrise
   cycleTimes[1] = sunRiseTimestamp;                    //Sunrise
   cycleTimes[2] = sunRiseTimestamp + cycleOffsets[0];  //After sunrise
@@ -134,6 +156,10 @@ void updateCycleTimes(){
   cycleTimes[6] = sunSetTimestamp - cycleOffsets[2];   //Before noon
   cycleTimes[7] = sunSetTimestamp;                     //Noon
   cycleTimes[8] = sunSetTimestamp + cycleOffsets[2];   //After Noon
+  
+  if(DEBUG){
+    printCycleTimes();
+  }
 }
 
 
@@ -142,12 +168,37 @@ void updateColor(DateTime now){
   uint32_t curTime = secondsFromMidnight(byte(now.hour()), byte(now.minute()), byte(now.second()));
   
   if(curTime <= cycleTimes[0]){
-    setToColor(cycleColors[0]);
+    setToColor(black);
+    if(DEBUG){
+      Serial.println("--Before sunrise");
+    }
   }else if(curTime > cycleTimes[8]){
-    setToColor(cycleColors[8]);
+    setToColor(black);
+    if(DEBUG){
+      Serial.println("--After sunset");
+    }
   }else{
     for(int i=0; i<9; i++){
       if(curTime > cycleTimes[i] && curTime <= cycleTimes[i+1]){
+        
+        /*
+        if(DEBUG){
+          Serial.println("Time Period Found: ");
+          Serial.print("  i = ");
+          Serial.println(i);
+          Serial.print("  curTime = ");
+          Serial.println(curTime);
+          Serial.print("  cycleTimes[i] = ");
+          Serial.println(cycleTimes[i]);
+          Serial.print("  cycleTimes[i+1] = ");
+          Serial.println(cycleTimes[i+1]);
+          Serial.print("  cycleColors[i] = ");
+          printColors(cycleColors[i]);
+          Serial.print("  cycleColors[i+1] = ");
+          printColors(cycleColors[i+1]);
+        }
+        */
+        
         calculateColors(curTime, cycleTimes[i], cycleTimes[i+1], cycleColors[i], cycleColors[i+1]);
         break;
       }
@@ -157,34 +208,94 @@ void updateColor(DateTime now){
 
 
 uint32_t secondsFromMidnight(byte in_hour, byte in_min, byte in_sec){
-  return uint32_t(in_hour*3600 + in_min*60 + in_sec);
+  uint32_t hours_in_seconds = uint32_t(in_hour) * 3600;
+  uint32_t minutes_in_seconds = uint32_t(in_min) * 60;
+  uint32_t seconds = uint32_t(in_sec);
+  /*
+  if(DEBUG){
+    Serial.print("{h,m,s} = {");
+    Serial.print(hours_in_seconds);
+    Serial.print(',');
+    Serial.print(minutes_in_seconds);
+    Serial.print(',');
+    Serial.print(seconds);
+    Serial.println('}');
+  }
+  */
+  
+  return hours_in_seconds + minutes_in_seconds + seconds;
 }
 
 
 void calculateColors(uint32_t curTime, uint32_t startTime, uint32_t endTime, int startColor[3], int endColor[3]){
   //Calculate time elapsed per step
-  int dTRed = int( (endTime - startTime) / (endColor[0] - startColor[0]) );
-  int dTGrn = int( (endTime - startTime) / (endColor[1] - startColor[1]) );
-  int dTBlu = int( (endTime - startTime) / (endColor[2] - startColor[2]) );
+  int dTRed = calculateStep(startTime, endTime, startColor[0], endColor[0]);
+  int dTGrn = calculateStep(startTime, endTime, startColor[1], endColor[1]);
+  int dTBlu = calculateStep(startTime, endTime, startColor[2], endColor[2]);
   
   //Calculate current time elapsed in the section of the day
   uint32_t dTime = curTime - startTime;
   
+  if(DEBUG){
+    Serial.println("Calculating Colors:");
+    Serial.print("  dTRed = ");
+    Serial.println(dTRed);
+    Serial.print("  dTGrn = ");
+    Serial.println(dTGrn);
+    Serial.print("  dTBlu = ");
+    Serial.println(dTBlu);
+    Serial.print("  dTime = ");
+    Serial.println(dTime);
+  }
+  
   int setColors[3];
   
-  setColors[0] = findColor(redVal, dTRed, dTime);
-  setColors[1] = findColor(grnVal, dTGrn, dTime);
-  setColors[2] = findColor(bluVal, dTBlu, dTime);
+  setColors[0] = findColor(startColor[0], redVal, dTRed, dTime);
+  setColors[1] = findColor(startColor[1], grnVal, dTGrn, dTime);
+  setColors[2] = findColor(startColor[2], bluVal, dTBlu, dTime);
   
   setToColor(setColors);
 }
 
+// Calculates number of seconds between each step of the color
+int calculateStep(uint32_t startTime, uint32_t endTime, int startColor, int endColor){
+  int retVal;
+  int colorDiff = endColor - startColor;
+  
+  if(DEBUG){
+    Serial.println("Calculating Step:");
+    Serial.print("  startTime = ");
+    Serial.println(startTime);
+    Serial.print("  endTime = ");
+    Serial.println(endTime);
+    Serial.print("  startColor = ");
+    Serial.println(startColor);
+    Serial.print("  endColor = ");
+    Serial.println(endColor);
+    Serial.print("  colorDiff = ");
+    Serial.println(colorDiff);
+  }
+  
+  // Protect against division by zero
+  if(colorDiff == 0){
+    retVal = 0;
+  }else{
+    int32_t timeDiff = int32_t(endTime) - int32_t(startTime);
+    retVal = int(timeDiff / int32_t(colorDiff));
+  }
+  
+  return retVal;
+}
+
 
 //Finds the current correct value for the color
-int findColor(int curColor, int dTColor, uint32_t dTime){
-  if( dTColor && ( dTime % dTColor) ){
+int findColor(int startColor, int curColor, int dTColor, uint32_t dTime){
+  if(dTColor == 0){
+    //If the color is already correct, just set it to what the start color was for this segment of the day
+    return startColor;
+  }else if( dTime % dTColor ){
     //find out how many steps we've done
-    return curColor + ( dTime / dTColor );
+    return startColor + int( int32_t(dTime) / int32_t(dTColor) );
     //Add that to curColor and return
   }else{
     return curColor;
@@ -199,7 +310,23 @@ void setToColor(int color[3]){
   
   analogWrite(redPin, color[0]);
   analogWrite(grnPin, color[1]);      
-  analogWrite(bluPin, color[2]); 
+  analogWrite(bluPin, color[2]);
+  
+  if(DEBUG){
+    printColors(color);
+  }
+}
+
+
+void printColors(int color[3]){
+  Serial.print('{');
+  Serial.print(color[0]);
+  Serial.print(',');
+  Serial.print(color[1]);
+  Serial.print(',');
+  Serial.print(color[2]);
+  Serial.print('}');
+  Serial.println();
 }
 
 
@@ -233,5 +360,28 @@ void printSunriseSunset(){
   Serial.print(sunSet[1], DEC);
   Serial.print(':');
   Serial.print(sunSet[0], DEC);
+  Serial.println();
+}
+
+void printCycleTimes(){
+  Serial.print('{');
+  Serial.print(cycleTimes[0]);
+  Serial.print(',');
+  Serial.print(cycleTimes[1]);
+  Serial.print(',');
+  Serial.print(cycleTimes[2]);
+  Serial.print(',');
+  Serial.print(cycleTimes[3]);
+  Serial.print(',');
+  Serial.print(cycleTimes[4]);
+  Serial.print(',');
+  Serial.print(cycleTimes[5]);
+  Serial.print(',');
+  Serial.print(cycleTimes[6]);
+  Serial.print(',');
+  Serial.print(cycleTimes[7]);
+  Serial.print(',');
+  Serial.print(cycleTimes[8]);
+  Serial.print('}');
   Serial.println();
 }
