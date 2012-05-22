@@ -65,6 +65,8 @@ void setup() {
 
   // Initialize clock with correct time
   RTC.adjust(DateTime(__DATE__, __TIME__));
+  // Example initialization with a specific time (useful for debugging)
+  //RTC.adjust(DateTime(__DATE__, "10:59:00"));
   
   // Color Pin Setup
   pinMode(redPin, OUTPUT);   // sets the pins as output
@@ -181,7 +183,7 @@ void updateColor(DateTime now){
     for(int i=0; i<9; i++){
       if(curTime > cycleTimes[i] && curTime <= cycleTimes[i+1]){
         
-        /*
+        
         if(DEBUG){
           Serial.println("Time Period Found: ");
           Serial.print("  i = ");
@@ -197,7 +199,7 @@ void updateColor(DateTime now){
           Serial.print("  cycleColors[i+1] = ");
           printColors(cycleColors[i+1]);
         }
-        */
+        
         
         calculateColors(curTime, cycleTimes[i], cycleTimes[i+1], cycleColors[i], cycleColors[i+1]);
         break;
@@ -290,16 +292,28 @@ int calculateStep(uint32_t startTime, uint32_t endTime, int startColor, int endC
 
 //Finds the current correct value for the color
 int findColor(int startColor, int curColor, int dTColor, uint32_t dTime){
+  int retVal;
+  
   if(dTColor == 0){
     //If the color is already correct, just set it to what the start color was for this segment of the day
-    return startColor;
+    retVal =  startColor;
   }else if( dTime % dTColor ){
-    //find out how many steps we've done
-    return startColor + int( int32_t(dTime) / int32_t(dTColor) );
-    //Add that to curColor and return
+    //find out how many steps we've done, add that to starting color for this segment
+    retVal = startColor + int( int32_t(dTime) / int32_t(dTColor) );
   }else{
-    return curColor;
+    retVal = curColor;
   }
+  
+  // Check to make sure value is within allowed range
+  // If the color value is negative, it will evaluate to 255.
+  // If it's greater than 255, it will evaluate to 0.
+  if(retVal < 0){
+    retVal = 0;
+  }else if(retVal > 255){
+    retVal = 255;
+  }
+  
+  return retVal;
 }
 
 
