@@ -10,6 +10,8 @@
 #include <TimeLord.h> // Provides sunrise/sunset information
 #include <Wire.h>
 #include <RTClib.h>
+#include <Adafruit_GFX.h>
+#include "Adafruit_LEDBackpack.h"
 
 /*
 #define DS1307_I2C_ADDRESS 0x68
@@ -17,7 +19,13 @@
 #define DS1307_HI_SQWE 0x10 // SQWE = 1 (enabled), RS1 = 0, RS0 = 0
 */
 
+// Matrix raw display values
+#define MATRIX_BLANK 0B000000000
+
 RTC_DS1307 RTC;
+
+// Instantiate clock display
+Adafruit_7segment matrix = Adafruit_7segment();
 
 // Set the three PWM pins to use for each color.  9,10,11 are the other 3
 const int redPin = 9;
@@ -76,6 +84,16 @@ void setup() {
   // Configure TimeLord for Orlando, FL and GMT-5 (Eastern)
   timeLord.Position(28.6, -81.2);
   timeLord.TimeZone(-5 * 60);
+
+  // Init display
+  matrix.begin(0x70);
+  matrix.setBrightness(1);
+  matrix.drawColon(true);
+  matrix.writeDigitNum(0, 0, false);
+  matrix.writeDigitNum(1, 1, false);
+  matrix.writeDigitNum(3, 2, false);
+  matrix.writeDigitNum(4, 3, false);
+  matrix.writeDisplay();
   
   if(DEBUG){
     Serial.begin(9600);
@@ -116,6 +134,7 @@ void loop() {
   prevDayOfMonth = now.day();    //Update the day so that we can compare on the next loop
   
   updateColor(now);
+  updateClock(now);
   
   delay(1000);
 }
@@ -164,6 +183,34 @@ void updateCycleTimes(){
   }
 }
 
+void updateClock(DateTime now){
+  // Display hour
+  int leftHour = now.twelveHour() / 10;
+  if (leftHour == 0)
+  {
+    matrix.writeDigitRaw(0, MATRIX_BLANK);
+  }
+  else
+  {
+    matrix.writeDigitNum(0, (now.twelveHour() / 10), false);
+  }
+  matrix.writeDigitNum(1, now.twelveHour() % 10, false);
+
+  // Display minute
+  int leftMinute = now.minute() / 10;
+  if (leftMinute == 0)
+  {
+    matrix.writeDigitRaw(3, MATRIX_BLANK);
+  }
+  else
+  {
+    matrix.writeDigitNum(3, (now.minute() / 10), false);
+  }
+  matrix.writeDigitNum(4, now.minute() % 10, now.isPM());
+
+  // Write out our changes to the display
+  matrix.writeDisplay();
+}
 
 void updateColor(DateTime now){
   // If statements detecting each cycleTime
