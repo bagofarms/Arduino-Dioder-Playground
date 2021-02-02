@@ -28,23 +28,25 @@ RTC_DS1307 RTC;
 Adafruit_7segment matrix = Adafruit_7segment();
 
 // Set the three PWM pins to use for each color.  9,10,11 are the other 3
-const int redPin = 9;
-const int grnPin = 10;
-const int bluPin = 11;
+const int redPin = 3;
+const int grnPin = 5;
+const int bluPin = 6;
 
 // Set input pin for square wave from RTC
 //const int swIn = 3;
 
 // Color arrays
-int black[3]  = {   0,   0,   0 };
-int white[3]  = { 255, 255, 255 };
-int red[3]    = { 255,   0,   0 };
-int green[3]  = {   0, 255,   0 };
-int blue[3]   = {   0,   0, 255 };
-int ltgreen[3]= { 100, 255, 100 };
-int ltblue[3] = { 100, 100, 255 };
-int orange[3] = { 255, 101,   0 };
-int purple[3] = { 255,   0, 255 };
+int black[3]    = {   0,   0,   0 };
+int white[3]    = { 255, 255, 255 };
+int red[3]      = { 255,   0,   0 };
+int green[3]    = {   0, 255,   0 };
+int blue[3]     = {   0,   0, 255 };
+int ltgreen[3]  = { 100, 255, 100 };
+int ltblue[3]   = { 100, 100, 255 };
+int ltyellow[3] = { 255, 200,  75 };
+int orange[3]   = { 255, 101,   0 };
+int purple[3]   = { 255,   0, 255 };
+int yellow[3]   = { 255, 200,   0 };
 
 // Variables that will hold the current color value
 int redVal;
@@ -64,7 +66,7 @@ uint32_t NOON = 43200;
 byte prevHour = 0;
 byte prevDayOfMonth = 0;
 
-boolean DEBUG = false;
+boolean DEBUG = true;
 
 
 void setup() {
@@ -72,7 +74,7 @@ void setup() {
   RTC.begin();
 
   // Initialize clock with correct time
-  RTC.adjust(DateTime(__DATE__, __TIME__));
+  //RTC.adjust(DateTime(__DATE__, __TIME__));
   // Example initialization with a specific time (useful for debugging)
   //RTC.adjust(DateTime(__DATE__, "10:59:00"));
   
@@ -84,16 +86,6 @@ void setup() {
   // Configure TimeLord for Orlando, FL and GMT-5 (Eastern)
   timeLord.Position(28.6, -81.2);
   timeLord.TimeZone(-5 * 60);
-
-  // Init display
-  matrix.begin(0x70);
-  matrix.setBrightness(1);
-  matrix.drawColon(true);
-  matrix.writeDigitNum(0, 0, false);
-  matrix.writeDigitNum(1, 1, false);
-  matrix.writeDigitNum(3, 2, false);
-  matrix.writeDigitNum(4, 3, false);
-  matrix.writeDisplay();
   
   if(DEBUG){
     Serial.begin(9600);
@@ -113,6 +105,16 @@ void setup() {
   setToColor(green);
   delay(200);
   setToColor(white);
+
+  // Init display
+  matrix.begin(0x70);
+  matrix.setBrightness(1);
+  matrix.drawColon(true);
+  matrix.writeDigitNum(0, 0, false);
+  matrix.writeDigitNum(1, 1, false);
+  matrix.writeDigitNum(3, 2, false);
+  matrix.writeDigitNum(4, 3, false);
+  matrix.writeDisplay();
   
   delay(500);
 }
@@ -174,9 +176,9 @@ void updateCycleTimes(){
   cycleTimes[3] = NOON - cycleOffsets[1];              //Before noon
   cycleTimes[4] = NOON;                                //Noon
   cycleTimes[5] = NOON + cycleOffsets[1];              //After Noon
-  cycleTimes[6] = sunSetTimestamp - cycleOffsets[2];   //Before noon
-  cycleTimes[7] = sunSetTimestamp;                     //Noon
-  cycleTimes[8] = sunSetTimestamp + cycleOffsets[2];   //After Noon
+  cycleTimes[6] = sunSetTimestamp - cycleOffsets[2];   //Before sunset
+  cycleTimes[7] = sunSetTimestamp;                     //Sunset
+  cycleTimes[8] = sunSetTimestamp + cycleOffsets[2];   //After Sunset
   
   if(DEBUG){
     printCycleTimes();
@@ -197,15 +199,7 @@ void updateClock(DateTime now){
   matrix.writeDigitNum(1, now.twelveHour() % 10, false);
 
   // Display minute
-  int leftMinute = now.minute() / 10;
-  if (leftMinute == 0)
-  {
-    matrix.writeDigitRaw(3, MATRIX_BLANK);
-  }
-  else
-  {
-    matrix.writeDigitNum(3, (now.minute() / 10), false);
-  }
+  matrix.writeDigitNum(3, (now.minute() / 10), false);
   matrix.writeDigitNum(4, now.minute() % 10, now.isPM());
 
   // Write out our changes to the display
@@ -222,7 +216,7 @@ void updateColor(DateTime now){
       Serial.println("--Before sunrise");
     }
   }else if(curTime > cycleTimes[8]){
-    setToColor(black);
+    setToColor(ltyellow);
     if(DEBUG){
       Serial.println("--After sunset");
     }
